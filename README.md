@@ -1,120 +1,37 @@
-### 단순법(Simplex Algorithm) 직접 구현
 
-#### 문제 정의
-문제를 다음과 같이 정의해보겠습니다:
+### 선형 계획법 (Linear Programming)
 
-- **목적 함수**: minimize \( c^T x \)
-- **제약 조건**: \( A x \le b \)
+#### 주어진 문제:
+- **목적 함수(Objective Function)**:
+  \[
+  \text{minimize } 0
+  \]
+  여기서 목적 함수는 최소화할 값이 없으므로, 이 문제는 제약 조건만을 만족시키는 것이 목표입니다.
 
-#### 예제 문제
-목적 함수: \( z = -3x_1 - x_2 \) minimize  
-제약 조건:
-\[
-\begin{align*}
-x_1 + 2x_2 &\le 4 \\
-3x_1 + 2x_2 &\le 6 \\
-x_1, x_2 &\ge 0
-\end{align*}
-\]
+- **제약 조건(Constraints)**:
+  \[
+  y_i (a \cdot x_i + b) > 0 \quad \forall i
+  \]
+  이 식에서 \( y_i \)는 클래스 레이블 (예: 1 또는 -1), \( x_i \)는 입력 벡터, \( a \)와 \( b \)는 각각 가중치 벡터와 편향입니다. 이 제약 조건은 모든 \( i \)에 대해 만족되어야 합니다.
 
-### 단순법 알고리즘 구현
-단순법을 구현하기 위해 다음 단계를 따릅니다:
+#### 식의 해석:
+- 이 식은 퍼셉트론의 분류 문제를 선형 계획법으로 표현한 것입니다.
+- 각 데이터 포인트 \( x_i \)와 그에 해당하는 레이블 \( y_i \)가 주어졌을 때, \( a \cdot x_i + b \)가 0보다 크도록 (즉, 올바르게 분류되도록) \( a \)와 \( b \)를 찾는 것이 목표입니다.
+- \( y_i \)가 1인 경우 \( a \cdot x_i + b \)가 0보다 크고, \( y_i \)가 -1인 경우 \( a \cdot x_i + b \)가 0보다 작아야 합니다. 따라서, \( y_i \)를 곱해서 항상 0보다 크게 만드는 것이 제약 조건입니다.
 
-1. 표준 형식으로 변환 (표준형)
-2. 초기 기본 해 설정
-3. 단순법 반복
-4. 종료 조건 확인
+#### 장점:
+- **Null Objective**:
+  - 목적 함수가 없거나 최소화해야 할 값이 없는 경우에도 제약 조건만으로 문제를 정의할 수 있습니다.
+  
+- **Constraints만 만족하면 됨 (Only requires to satisfy constraints)**:
+  - 이 문제는 목적 함수를 최소화하는 것 대신 제약 조건을 만족시키는 것만을 요구합니다. 이는 제약 조건만으로 문제를 해결할 수 있다는 뜻입니다.
+  
+- **문제가 불가능한 경우를 알 수 있음 (It will tell you if the problem is infeasible)**:
+  - 선형 계획법 알고리즘은 제약 조건을 만족시키는 해가 존재하지 않는 경우, 문제를 해결할 수 없음을 알려줍니다. 이는 문제의 가능 여부를 판별하는 데 유용합니다.
 
-#### 표준형으로 변환
-제약 조건을 표준형으로 변환하면 다음과 같습니다:
-\[
-\begin{align*}
-x_1 + 2x_2 + s_1 &= 4 \\
-3x_1 + 2x_2 + s_2 &= 6 \\
-x_1, x_2, s_1, s_2 &\ge 0 \\
-\end{align*}
-\]
-여기서 \( s_1, s_2 \)는 슬랙 변수입니다.
+### 요약:
+- 이 문제는 목적 함수가 없고, 제약 조건만을 만족시키는 선형 계획법 문제입니다.
+- 주어진 제약 조건을 만족하는 \( a \)와 \( b \)를 찾는 것이 목표입니다.
+- 선형 계획법을 사용하여 제약 조건을 만족하는지 여부를 판별할 수 있습니다.
 
-#### 초기 기본 해 설정
-초기 기본 해를 설정합니다. \( x_1 = x_2 = 0 \), \( s_1 = 4 \), \( s_2 = 6 \)입니다.
-
-#### 파이썬 코드
-다음은 단순법 알고리즘을 구현한 예제입니다:
-
-```python
-import numpy as np
-
-# 문제 정의
-c = np.array([-3, -1, 0, 0])  # 목적 함수 계수
-A = np.array([
-    [
-
-```python
-import numpy as np
-
-# 문제 정의
-c = np.array([-3, -1, 0, 0])  # 목적 함수 계수
-A = np.array([
-    [1, 2, 1, 0], 
-    [3, 2, 0, 1]
-])  # 제약 조건 계수
-b = np.array([4, 6])  # 제약 조건의 우변 값
-
-# 초기 기본 해 설정
-basic_vars = [2, 3]
-non_basic_vars = [0, 1]
-B = A[:, basic_vars]
-N = A[:, non_basic_vars]
-c_B = c[basic_vars]
-c_N = c[non_basic_vars]
-
-# 반복 시작
-while True:
-    # Step 1: B^-1 구하기
-    B_inv = np.linalg.inv(B)
-
-    # Step 2: 현재 기본 해 구하기
-    x_B = np.dot(B_inv, b)
-
-    # Step 3: 현재 목적 함수 값 계산
-    z = np.dot(c_B, x_B)
-
-    # Step 4: Reduced cost 계산
-    y = np.dot(c_B, B_inv)
-    reduced_cost = c_N - np.dot(y, N)
-
-    # 종료 조건 확인
-    if all(reduced_cost >= 0):
-        break  # 최적해 도출
-
-    # Step 5: 들어올 변수 선택 (가장 작은 reduced cost)
-    entering = np.argmin(reduced_cost)
-    entering_var = non_basic_vars[entering]
-
-    # Step 6: 들어올 변수에 대한 방향 벡터 계산
-    direction = np.dot(B_inv, A[:, entering_var])
-
-    # Step 7: 나갈 변수 선택 (Bland's rule)
-    ratios = np.divide(x_B, direction, out=np.full_like(x_B, np.inf), where=direction > 0)
-    leaving = np.argmin(ratios)
-    leaving_var = basic_vars[leaving]
-
-    # 변수 교체
-    basic_vars[leaving] = entering_var
-    non_basic_vars[entering] = leaving_var
-
-    B = A[:, basic_vars]
-    N = A[:, non_basic_vars]
-    c_B = c[basic_vars]
-    c_N = c[non_basic_vars]
-
-# 결과 출력
-solution = np.zeros(len(c))
-solution[basic_vars] = x_B
-print("최적해:", solution[:2])
-print("최적해의 값:", z)
-```
-
-### 요약
-이 코드는 단순법 알고리즘을 사용하여 주어진 선형 계획법 문제를 해결합니다. 각 단계는 수학적으로 단순법을 수행하는 방법을 반영하며, 최적해를 찾을 때까지 반복합니다. 이 예제는 단순한 형태의 문제를 해결하기 위한 것이며, 실제 응용에서는 더 복잡한 기능과 예외 처리가 필요할 수 있습니다.
+이를 통해 퍼셉트론 학습 문제를 선형 계획법으로 변환하여 해결할 수 있다는 것을 알 수 있습니다.
