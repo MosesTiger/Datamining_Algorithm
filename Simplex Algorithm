@@ -1,0 +1,63 @@
+import numpy as np
+
+# 문제 정의
+c = np.array([-3, -1, 0, 0])  # 목적 함수 계수
+A = np.array([
+    [1, 2, 1, 0], 
+    [3, 2, 0, 1]
+])  # 제약 조건 계수
+b = np.array([4, 6])  # 제약 조건의 우변 값
+
+# 초기 기본 해 설정
+basic_vars = [2, 3]
+non_basic_vars = [0, 1]
+B = A[:, basic_vars]
+N = A[:, non_basic_vars]
+c_B = c[basic_vars]
+c_N = c[non_basic_vars]
+
+# 반복 시작
+while True:
+    # Step 1: B^-1 구하기
+    B_inv = np.linalg.inv(B)
+
+    # Step 2: 현재 기본 해 구하기
+    x_B = np.dot(B_inv, b)
+
+    # Step 3: 현재 목적 함수 값 계산
+    z = np.dot(c_B, x_B)
+
+    # Step 4: Reduced cost 계산
+    y = np.dot(c_B, B_inv)
+    reduced_cost = c_N - np.dot(y, N)
+
+    # 종료 조건 확인
+    if all(reduced_cost >= 0):
+        break  # 최적해 도출
+
+    # Step 5: 들어올 변수 선택 (가장 작은 reduced cost)
+    entering = np.argmin(reduced_cost)
+    entering_var = non_basic_vars[entering]
+
+    # Step 6: 들어올 변수에 대한 방향 벡터 계산
+    direction = np.dot(B_inv, A[:, entering_var])
+
+    # Step 7: 나갈 변수 선택 (Bland's rule)
+    ratios = np.divide(x_B, direction, out=np.full_like(x_B, np.inf), where=direction > 0)
+    leaving = np.argmin(ratios)
+    leaving_var = basic_vars[leaving]
+
+    # 변수 교체
+    basic_vars[leaving] = entering_var
+    non_basic_vars[entering] = leaving_var
+
+    B = A[:, basic_vars]
+    N = A[:, non_basic_vars]
+    c_B = c[basic_vars]
+    c_N = c[non_basic_vars]
+
+# 결과 출력
+solution = np.zeros(len(c))
+solution[basic_vars] = x_B
+print("최적해:", solution[:2])
+print("최적해의 값:", z)
