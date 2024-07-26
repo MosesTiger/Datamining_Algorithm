@@ -1,0 +1,26 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 날짜 범위 생성
+date_rng = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
+
+# 시계열 데이터 생성 (예: 랜덤한 주가 데이터)
+np.random.seed(42)
+price_data = np.random.randn(len(date_rng)).cumsum() + 100
+
+# 데이터프레임 생성
+df = pd.DataFrame(date_rng, columns=['date'])
+df['price'] = price_data
+
+# 인덱스를 날짜로 설정
+df.set_index('date', inplace=True)
+
+# 시각화
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['price'], label='Price')
+plt.title('Time Series Data Example')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
