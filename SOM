@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class SOM:
+    def __init__(self, x, y, input_len, sigma=1.0, learning_rate=0.5):
+        self.x = x
+        self.y = y
+        self.input_len = input_len
+        self.sigma = sigma
+        self.learning_rate = learning_rate
+        self.weights = np.random.rand(x, y, input_len)
+        self.neigx, self.neigy = np.meshgrid(np.arange(x), np.arange(y))
+    
+    def _euclidean_distance(self, a, b):
+        return np.linalg.norm(a - b)
+    
+    def _neighborhood_function(self, distance, radius):
+        return np.exp(-distance**2 / (2 * (radius**2)))
+    
+    def _best_matching_unit(self, sample):
+        distances = np.linalg.norm(self.weights - sample, axis=2)
+        bmu_index = np.unravel_index(np.argmin(distances, axis=None), distances.shape)
+        return bmu_index
+
+    def _update_weights(self, sample, bmu_index, iteration, total_iterations):
+        learning_rate = self.learning_rate * np.exp(-iteration / total_iterations)
+        radius = self.sigma * np.exp(-iteration / (total_iterations / np.log(self.sigma)))
+
+        for i in range(self.x):
+            for j in range(self.y):
+                distance = np.linalg.norm(np.array([i, j]) - np.array(bmu_index))
+                if distance < radius:
+                    influence = self._neighborhood_function(distance, radius)
+                    self.weights[i, j] += influence * learning_rate * (sample - self.weights[i, j])
+    
+    def train(self, data, num_iterations):
+        for iteration in range(num_iterations):
+            for sample in data:
+                bmu_index = self._best_matching_unit(sample)
+                self._update_weights(sample, bmu_index, iteration, num_iterations)
+    
+    def map_vects(self, data):
+        mapped = []
+        for sample in data:
+            bmu_index = self._best_matching_unit(sample)
+            mapped.append(bmu_index)
+        return mapped
+
+# 예제 데이터 생성 (여기서는 Iris 데이터셋 사용)
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import minmax_scale
+
+data = load_iris()
+X = data.data
+y = data.target
+
+# 데이터 스케일링
+X = minmax_scale(X)
+
+# SOM 초기화 및 학습
+som_size = 10
+som = SOM(som_size, som_size, X.shape[1], sigma=1.0, learning_rate=0.5)
+som.train(X, 100)
+
+# 학습 결과 시각화
+mapped = som.map_vects(X)
+plt.figure(figsize=(10, 10))
+for i, m in enumerate(mapped):
+    plt.text(m[0] + 0.5, m[1] + 0.5, str(y[i]), color=plt.cm.rainbow(y[i] / 2), fontdict={'weight': 'bold', 'size': 11})
+
+plt.xlim([0, som_size])
+plt.ylim([0, som_size])
+plt.title('SOM - Iris Data')
+plt.show()
